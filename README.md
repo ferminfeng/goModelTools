@@ -38,6 +38,11 @@ go run main.go
     --c config.toml
     --model_path ./models/ 
     --model_replace true
+    --table_name address
+    
+例：
+./goModelTools-darwin-amd64
+啥都不传，则会在 ./models/base下覆盖生成全部表的model,
 ```
 
 | 参数名 | 必选   | 说明                                        |
@@ -45,3 +50,4 @@ go run main.go
 | c   | 否    | 配置文件，默认为config.toml                       |
 | model_path   | 否    | model文件生成位置，默认为 ./models/base,注意需要提前生成文件夹 |
 | model_replace   | 否    | 是否覆盖已存在model，默认为true                      |
+| table_name   | 否    | 待生成model的表名(暂只支持传入单张表)，不填则生成全部表的model     |
