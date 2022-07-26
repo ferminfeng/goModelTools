@@ -6,6 +6,7 @@ import (
 
 type Config struct {
 	DB           *Database `mapstructure:"db"`
+	DBGame       *Database `mapstructure:"db_game"`
 	ModelPath    string    `mapstructure:"model_path"`
 	ModelReplace string    `mapstructure:"model_replace"`
 }

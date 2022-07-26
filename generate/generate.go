@@ -27,8 +27,7 @@ type Field struct {
 }
 
 // Generate 生成表
-func Generate(cfg *config.Config, tableNames ...string) {
-	dbName := cfg.DB.WriteDB.DB
+func Generate(cfg *config.Config, dbName string, tableNames ...string) {
 
 	tableNamesStr := ""
 	for _, name := range tableNames {
@@ -37,6 +36,8 @@ func Generate(cfg *config.Config, tableNames ...string) {
 		}
 		tableNamesStr += "'" + name + "'"
 	}
+
+	fmt.Println(dbName, ",", tableNamesStr)
 	tables := getTables(dbName, tableNamesStr) // 生成所有表信息
 	for _, table := range tables {
 		fields := getFields(table.Name)
@@ -78,13 +79,6 @@ func generateModel(cfg *config.Config, table Table, fields []Field) {
 	tableContent += "func (dao " + tableName + ") TableName() string {" + "\n"
 	tableContent += "	return \"" + table.Name + "\"" + "\n"
 	tableContent += "}" + "\n" + "\n"
-	/*
-
-		// TableName ...
-		func (dao ReportListModel) TableName() string {
-			return "report_list"
-		}
-	*/
 
 	// 表注释
 	if len(table.Comment) > 0 {
@@ -200,7 +194,7 @@ func getFieldJson(field Field) string {
 
 // 获取字段json描述
 func getFieldJson2(field Field) string {
-	fmt.Println(field)
+
 	// 是否主键
 	keyJson := ``
 	if field.Key == "PRI" {
@@ -221,7 +215,12 @@ func getFieldJson2(field Field) string {
 	// 默认值
 	defaultJson := ``
 	if len(field.Default) > 0 {
-		defaultJson = ` default ` + field.Default + ``
+		fieldType := getFiledType(field)
+		if fieldType == "string" {
+			defaultJson = ` default '` + field.Default + `'`
+		} else {
+			defaultJson = ` default ` + field.Default + ``
+		}
 	}
 
 	// 字段备注
