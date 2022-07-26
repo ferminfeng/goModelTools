@@ -200,10 +200,16 @@ func getFieldJson(field Field) string {
 
 // 获取字段json描述
 func getFieldJson2(field Field) string {
+	fmt.Println(field)
 	// 是否主键
 	keyJson := ``
 	if field.Key == "PRI" {
 		keyJson = ` pk`
+	}
+
+	// extra
+	if field.Extra == "auto_increment" {
+		keyJson += ` autoincr`
 	}
 
 	// 是否允许为Null
@@ -218,12 +224,6 @@ func getFieldJson2(field Field) string {
 		defaultJson = ` default ` + field.Default + ``
 	}
 
-	// extra
-	extraJson := ``
-	if len(field.Extra) > 0 {
-		extraJson = ` ` + field.Extra
-	}
-
 	// 字段备注
 	commentJson := ``
 	if len(field.Comment) > 0 {
@@ -233,7 +233,7 @@ func getFieldJson2(field Field) string {
 	// 字段类型
 	typeJson := ` ` + field.Type
 
-	json := `json:"` + field.Field + `" xorm:"` + keyJson + notNullJson + defaultJson + extraJson + commentJson + typeJson + `"`
+	json := `json:"` + field.Field + `" xorm:"` + keyJson + notNullJson + defaultJson + commentJson + typeJson + `"`
 	return json
 }
 
