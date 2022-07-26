@@ -2,10 +2,10 @@ package generate
 
 import (
 	"fmt"
-	"github.com/golang/protobuf/protoc-gen-go/generator"
 	"io"
-	"modeltools/conf"
-	"modeltools/dbtools"
+	"modeltools/config"
+	"modeltools/dao"
+	"modeltools/helper"
 	"os"
 	"strings"
 )
@@ -27,7 +27,9 @@ type Field struct {
 }
 
 // Generate 生成表
-func Generate(tableNames ...string) {
+func Generate(cfg *config.Config, tableNames ...string) {
+	dbName := cfg.DB.WriteDB.DB
+
 	tableNamesStr := ""
 	for _, name := range tableNames {
 		if tableNamesStr != "" {
@@ -35,43 +37,54 @@ func Generate(tableNames ...string) {
 		}
 		tableNamesStr += "'" + name + "'"
 	}
-	tables := getTables(tableNamesStr) // 生成所有表信息
+	tables := getTables(dbName, tableNamesStr) // 生成所有表信息
 	for _, table := range tables {
 		fields := getFields(table.Name)
-		generateModel(table, fields)
+		generateModel(cfg, table, fields)
 	}
 }
 
 // 获取表信息
-func getTables(tableNames string) []Table {
-	db := dbtools.GetMysqlDb()
+func getTables(dbName, tableNames string) []Table {
+
+	db := dao.GetMysqlDb()
 	var tables []Table
 	if tableNames == "" {
-		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE table_schema='" + conf.MasterDbConfig.DbName + "';").Find(&tables)
+		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE table_schema='" + dbName + "';").Find(&tables)
 	} else {
-		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE TABLE_NAME IN (" + tableNames + ") AND table_schema='" + conf.MasterDbConfig.DbName + "';").Find(&tables)
+		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE TABLE_NAME IN (" + tableNames + ") AND table_schema='" + dbName + "';").Find(&tables)
 	}
 	return tables
 }
 
 // 获取所有字段信息
 func getFields(tableName string) []Field {
-	db := dbtools.GetMysqlDb()
+	db := dao.GetMysqlDb()
 	var fields []Field
 	db.Raw("show FULL COLUMNS from " + tableName + ";").Find(&fields)
 	return fields
 }
 
 // 生成Model
-func generateModel(table Table, fields []Field) {
+func generateModel(cfg *config.Config, table Table, fields []Field) {
 	packageContent := "package models\n\n"
 
 	importContent := "import \"time\"\n\n"
 	isUseImport := false
 
-	tableName := generator.CamelCase(table.Name) + "Model"
+	tableName := helper.CamelCase(table.Name)
 
 	tableContent := ""
+	tableContent += "func (dao " + tableName + ") TableName() string {" + "\n"
+	tableContent += "	return \"" + table.Name + "\"" + "\n"
+	tableContent += "}" + "\n" + "\n"
+	/*
+
+		// TableName ...
+		func (dao ReportListModel) TableName() string {
+			return "report_list"
+		}
+	*/
 
 	// 表注释
 	if len(table.Comment) > 0 {
@@ -80,9 +93,8 @@ func generateModel(table Table, fields []Field) {
 	tableContent += "type " + tableName + " struct {\n"
 	// 生成字段
 	for _, field := range fields {
-		fmt.Println(field)
 		// 字段名称
-		fieldName := generator.CamelCase(field.Field)
+		fieldName := helper.CamelCase(field.Field)
 
 		// 获取字段类型
 		fieldType := getFiledType(field)
@@ -105,12 +117,12 @@ func generateModel(table Table, fields []Field) {
 
 	tableContent += "}"
 
-	filename := conf.ModelPath + generator.CamelCase(table.Name+"Model") + ".go"
+	filename := cfg.ModelPath + helper.CamelCase(table.Name) + ".go"
 	var f *os.File
 	var err error
 	if checkFileIsExist(filename) {
-		if !conf.ModelReplace {
-			fmt.Println(generator.CamelCase(table.Name) + " 已存在，需删除才能重新生成...")
+		if cfg.ModelReplace != "true" {
+			fmt.Println(helper.CamelCase(table.Name) + " 已存在，需删除才能重新生成...")
 			return
 		}
 		f, err = os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0666) // 打开文件
@@ -135,7 +147,7 @@ func generateModel(table Table, fields []Field) {
 	if err != nil {
 		panic(err)
 	} else {
-		fmt.Println(generator.CamelCase(table.Name) + " 已生成...")
+		fmt.Println(helper.CamelCase(table.Name) + " 已生成...")
 	}
 }
 
