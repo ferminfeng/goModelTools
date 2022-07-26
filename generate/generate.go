@@ -37,7 +37,6 @@ func Generate(cfg *config.Config, dbName string, tableNames ...string) {
 		tableNamesStr += "'" + name + "'"
 	}
 
-	fmt.Println(dbName, ",", tableNamesStr)
 	tables := getTables(dbName, tableNamesStr) // 生成所有表信息
 	for _, table := range tables {
 		fields := getFields(table.Name)
@@ -68,7 +67,14 @@ func getFields(tableName string) []Field {
 
 // 生成Model
 func generateModel(cfg *config.Config, table Table, fields []Field) {
-	packageContent := "package models\n\n"
+	// 获取包名
+	// 指定分隔符
+	countSplit := strings.Split(cfg.ModelPath, "/")
+	lenth := len(countSplit)
+	packageName := countSplit[lenth-2]
+
+	// packageContent := "package models\n\n"
+	packageContent := "package " + packageName + "\n\n"
 
 	importContent := "import \"time\"\n\n"
 	isUseImport := false

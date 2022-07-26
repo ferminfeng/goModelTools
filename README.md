@@ -46,10 +46,10 @@ go run main.go
 啥都不传，则会在 ./models/base下覆盖生成全部表的model,
 ```
 
-| 参数名 | 必选   | 说明                                       |
-|:----|:-----|------------------------------------------|
-| c   | 否    | 配置文件，默认为config.toml                      |
-| model_path   | 否    | model文件生成位置，默认为 ./models/base,注意需要提前生成文件夹 |
-| model_replace   | 否    | 是否覆盖已存在model，默认为true                     |
-| databases   | 否    | 使用哪个数据库链接                                |
-| table_name   | 否    | 待生成model的表名(暂只支持传入单张表)，不填则生成全部表的model    |
+| 参数名 | 必选   | 说明                                                   |
+|:----|:-----|------------------------------------------------------|
+| c   | 否    | 配置文件，默认为config.toml                                  |
+| model_path   | 否    | model文件生成位置，默认为 ./models/base/,注意需要提前生成文件夹,且最后必须以/结束 |
+| model_replace   | 否    | 是否覆盖已存在model，默认为true                                 |
+| databases   | 否    | 使用哪个数据库链接,目前支持的有 db/db_name，默认为db                    |
+| table_name   | 否    | 待生成model的表名(暂只支持传入单张表)，不填则生成全部表的model                |
