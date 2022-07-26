@@ -10,88 +10,138 @@ import (
 	"strings"
 )
 
-func Genertate(tableNames ...string)  {
+type Table struct {
+	Name    string `gorm:"column:Name"`
+	Comment string `gorm:"column:Comment"`
+}
+
+type Field struct {
+	Field      string `gorm:"column:Field"`
+	Type       string `gorm:"column:Type"`
+	Null       string `gorm:"column:Null"`
+	Key        string `gorm:"column:Key"`
+	Default    string `gorm:"column:Default"`
+	Extra      string `gorm:"column:Extra"`
+	Privileges string `gorm:"column:Privileges"`
+	Comment    string `gorm:"column:Comment"`
+}
+
+// Generate 生成表
+func Generate(tableNames ...string) {
 	tableNamesStr := ""
 	for _, name := range tableNames {
 		if tableNamesStr != "" {
 			tableNamesStr += ","
 		}
-		tableNamesStr += "'"+name+"'"
+		tableNamesStr += "'" + name + "'"
 	}
-	tables := getTables(tableNamesStr) //生成所有表信息
-	//tables := getTables("admin_info","video_info") //生成指定表信息，可变参数可传入过个表名
-	for _,table := range tables {
+	tables := getTables(tableNamesStr) // 生成所有表信息
+	for _, table := range tables {
 		fields := getFields(table.Name)
-		generateModel(table,fields)
+		generateModel(table, fields)
 	}
 }
-//获取表信息
+
+// 获取表信息
 func getTables(tableNames string) []Table {
 	db := dbtools.GetMysqlDb()
 	var tables []Table
 	if tableNames == "" {
-		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE table_schema='"+conf.MasterDbConfig.DbName+"';").Find(&tables)
-	}else{
-		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE TABLE_NAME IN ("+tableNames+") AND table_schema='"+conf.MasterDbConfig.DbName+"';").Find(&tables)
+		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE table_schema='" + conf.MasterDbConfig.DbName + "';").Find(&tables)
+	} else {
+		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE TABLE_NAME IN (" + tableNames + ") AND table_schema='" + conf.MasterDbConfig.DbName + "';").Find(&tables)
 	}
 	return tables
 }
-//获取所有字段信息
+
+// 获取所有字段信息
 func getFields(tableName string) []Field {
 	db := dbtools.GetMysqlDb()
 	var fields []Field
-	db.Raw("show FULL COLUMNS from "+tableName+";").Find(&fields)
+	db.Raw("show FULL COLUMNS from " + tableName + ";").Find(&fields)
 	return fields
 }
 
+// 生成Model
+func generateModel(table Table, fields []Field) {
+	packageContent := "package models\n\n"
 
-//生成Model
-func generateModel(table Table, fields []Field)  {
-	content := "package models\n\n"
-	//表注释
+	importContent := "import \"time\"\n\n"
+	isUseImport := false
+
+	tableName := generator.CamelCase(table.Name) + "Model"
+
+	tableContent := ""
+
+	// 表注释
 	if len(table.Comment) > 0 {
-		content += "// "+table.Comment+"\n"
+		tableContent += "// " + tableName + " " + table.Comment + "\n"
 	}
-	content += "type "+generator.CamelCase(table.Name)+" struct {\n"
-	//生成字段
+	tableContent += "type " + tableName + " struct {\n"
+	// 生成字段
 	for _, field := range fields {
+		fmt.Println(field)
+		// 字段名称
 		fieldName := generator.CamelCase(field.Field)
-		fieldJson := getFieldJson(field)
-		fieldType := getFiledType(field)
-		fieldComment := getFieldComment(field)
-		content += "	"+fieldName+" "+fieldType+" `"+fieldJson+"` "+fieldComment+"\n"
-	}
-	content += "}"
 
-	filename := conf.ModelPath+generator.CamelCase(table.Name)+".go"
+		// 获取字段类型
+		fieldType := getFiledType(field)
+
+		// 获取字段json描述
+		// fieldJson := getFieldJson(field)
+		fieldJson := getFieldJson2(field)
+
+		// 如果存在time类型，则引入time包
+		if fieldType == "time.Time" {
+			isUseImport = true
+		}
+
+		// 字段注释
+		// fieldComment := getFieldComment(field)
+		fieldComment := ""
+
+		tableContent += "	" + fieldName + " " + fieldType + " `" + fieldJson + "` " + fieldComment + "\n"
+	}
+
+	tableContent += "}"
+
+	filename := conf.ModelPath + generator.CamelCase(table.Name+"Model") + ".go"
 	var f *os.File
 	var err error
-	if checkFileIsExist(filename){
+	if checkFileIsExist(filename) {
 		if !conf.ModelReplace {
-			fmt.Println(generator.CamelCase(table.Name)+" 已存在，需删除才能重新生成...")
+			fmt.Println(generator.CamelCase(table.Name) + " 已存在，需删除才能重新生成...")
 			return
 		}
-		f, err = os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0666) //打开文件
+		f, err = os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0666) // 打开文件
 		if err != nil {
 			panic(err)
 		}
-	}else{
+	} else {
 		f, err = os.Create(filename)
 		if err != nil {
 			panic(err)
 		}
 	}
 	defer f.Close()
+
+	content := packageContent
+	if isUseImport {
+		content += importContent + tableContent
+	} else {
+		content += tableContent
+	}
 	_, err = io.WriteString(f, content)
 	if err != nil {
 		panic(err)
-	}else{
-		fmt.Println(generator.CamelCase(table.Name)+" 已生成...")
+	} else {
+		fmt.Println(generator.CamelCase(table.Name) + " 已生成...")
 	}
 }
-//获取字段类型
-func getFiledType(field Field)  string{
-	typeArr := strings.Split(field.Type,"(")
+
+// 获取字段类型
+func getFiledType(field Field) string {
+	typeArr := strings.Split(field.Type, "(")
 
 	switch typeArr[0] {
 	case "int":
@@ -130,18 +180,60 @@ func getFiledType(field Field)  string{
 		return "string"
 	}
 }
-//获取字段json描述
+
+// 获取字段json描述
 func getFieldJson(field Field) string {
-	return `json:"`+field.Field+`"`
+	return `json:"` + field.Field + `"`
 }
-//获取字段说明
-func getFieldComment(field Field) string{
+
+// 获取字段json描述
+func getFieldJson2(field Field) string {
+	// 是否主键
+	keyJson := ``
+	if field.Key == "PRI" {
+		keyJson = ` pk`
+	}
+
+	// 是否允许为Null
+	notNullJson := ``
+	if field.Null == "NO" {
+		notNullJson = ` NOT NULL`
+	}
+
+	// 默认值
+	defaultJson := ``
+	if len(field.Default) > 0 {
+		defaultJson = ` default ` + field.Default + ``
+	}
+
+	// extra
+	extraJson := ``
+	if len(field.Extra) > 0 {
+		extraJson = ` ` + field.Extra
+	}
+
+	// 字段备注
+	commentJson := ``
 	if len(field.Comment) > 0 {
-		return "// "+field.Comment
+		commentJson = ` comment('` + field.Comment + `')`
+	}
+
+	// 字段类型
+	typeJson := ` ` + field.Type
+
+	json := `json:"` + field.Field + `" xorm:"` + keyJson + notNullJson + defaultJson + extraJson + commentJson + typeJson + `"`
+	return json
+}
+
+// 获取字段说明
+func getFieldComment(field Field) string {
+	if len(field.Comment) > 0 {
+		return "// " + field.Comment
 	}
 	return ""
 }
-//检查文件是否存在
+
+// 检查文件是否存在
 func checkFileIsExist(filename string) bool {
 	var exist = true
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
