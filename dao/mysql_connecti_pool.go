@@ -29,7 +29,7 @@ func GetMysqlInstance() *MysqlConnectPool {
 func (m *MysqlConnectPool) InitMysqlPool(dbConf *config.Database) (issucc bool) {
 	writeDb := dbConf.WriteDB
 
-	db, errDb = gorm.Open("mysql", writeDb.User+":"+writeDb.Password+"@tcp("+writeDb.Host+":"+writeDb.Port+")/"+writeDb.DB+"?charset=utf8&parseTime=True&loc=Local")
+	db, errDb = gorm.Open("mysql", writeDb.User+":"+writeDb.Password+"@tcp("+writeDb.Host+")/"+writeDb.DB+"?charset=utf8&parseTime=True&loc=Local")
 	db.SingularTable(true)
 	if errDb != nil {
 		log.Fatal(errDb)

@@ -20,7 +20,6 @@ type DB struct {
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
 	DB       string `mapstructure:"db"`
-	Port     string `mapstructure:"port"`
 }
 
 // Init config init
