@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	configFile, modelPath, modelReplace string
+	configFile, modelPath, modelReplace, tableName string
 )
 
 func main() {
@@ -20,6 +20,10 @@ func main() {
 
 	// 是否覆盖已存在model
 	flag.StringVar(&modelReplace, "model_replace", "true", "model replace")
+
+	// 待生成model的表
+	flag.StringVar(&tableName, "table_name", "", "table_name")
+
 	flag.Parse()
 
 	// 初始化配置文件
@@ -31,6 +35,10 @@ func main() {
 	// 初始化数据库
 	dao.Init(cfg.DB)
 
-	// generate.Generate() //生成所有表信息
-	generate.Generate(cfg, "introducer", "against_task") // 生成指定表信息，可变参数可传入多个表名
+	if tableName == "" {
+		generate.Generate(cfg) // 生成所有表信息
+	} else {
+		generate.Generate(cfg, tableName) // 接收传参
+		// generate.Generate(cfg, "table1", "table2") // 生成指定表信息，可变参数可传入多个表名
+	}
 }
