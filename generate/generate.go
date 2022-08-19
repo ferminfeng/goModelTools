@@ -232,6 +232,8 @@ func getFieldJson2(field Field) string {
 	// 字段备注
 	commentJson := ``
 	if len(field.Comment) > 0 {
+		field.Comment = strings.Replace(field.Comment, "\n", "", -1)
+		field.Comment = strings.Replace(field.Comment, "\r", "", -1)
 		commentJson = ` comment('` + field.Comment + `')`
 	}
 
