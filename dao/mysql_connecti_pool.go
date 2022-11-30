@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"log"
@@ -29,7 +30,9 @@ func GetMysqlInstance() *MysqlConnectPool {
 func (m *MysqlConnectPool) InitMysqlPool(dbConf *config.Database) (issucc bool) {
 	writeDb := dbConf.WriteDB
 
-	db, errDb = gorm.Open("mysql", writeDb.User+":"+writeDb.Password+"@tcp("+writeDb.Host+")/"+writeDb.DB+"?charset=utf8&parseTime=True&loc=Local")
+	//links := fmt.Sprintf(writeDb.User + ":" + writeDb.Password + "@tcp(" + writeDb.Host + ")/" + writeDb.DB + "?charset=utf8&parseTime=True&loc=Local")
+	links := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local", writeDb.User, writeDb.Password, writeDb.Host, writeDb.Port, writeDb.DB)
+	db, errDb = gorm.Open("mysql", links)
 	db.SingularTable(true)
 	if errDb != nil {
 		log.Fatal(errDb)
