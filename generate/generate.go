@@ -79,7 +79,7 @@ func generateModel(cfg *config.Config, table Table, fields []Field) {
 	importContent := "import \"time\"\n\n"
 	isUseImport := false
 
-	tableName := helper.CamelCase(table.Name)
+	tableName := helper.CamelCase(table.Name) + "Model"
 
 	tableContent := ""
 	tableContent += "func (dao " + tableName + ") TableName() string {" + "\n"
