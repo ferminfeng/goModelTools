@@ -43,7 +43,7 @@ go run main.go
     
 例：
 ./goModelTools-darwin-amd64
-啥都不传，则会在 ./models/base下覆盖生成全部表的model,
+啥都不传，则会在 ./models下覆盖生成全部表的model,
 ```
 
 | 参数名 | 必选   | 说明                                                   |

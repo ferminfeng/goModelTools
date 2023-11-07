@@ -17,7 +17,7 @@ func main() {
 	flag.StringVar(&configFile, "c", "./config.toml", "model path")
 
 	// model保存路径
-	flag.StringVar(&modelPath, "model_path", "./models/base/", "goModelTools server config")
+	flag.StringVar(&modelPath, "model_path", "./models/", "goModelTools server config")
 
 	// 是否覆盖已存在model
 	flag.StringVar(&modelReplace, "model_replace", "true", "model replace")

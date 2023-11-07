@@ -4,8 +4,6 @@ github.com/fsnotify/fsnotify
 # github.com/go-sql-driver/mysql v1.5.0
 ## explicit; go 1.10
 github.com/go-sql-driver/mysql
-# github.com/golang/protobuf v1.5.2
-## explicit; go 1.9
 # github.com/hashicorp/hcl v1.0.0
 ## explicit
 github.com/hashicorp/hcl
@@ -75,8 +73,6 @@ golang.org/x/sys/unix
 ## explicit; go 1.17
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# google.golang.org/protobuf v1.28.0
-## explicit; go 1.11
 # gopkg.in/ini.v1 v1.66.4
 ## explicit
 gopkg.in/ini.v1
