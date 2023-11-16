@@ -50,9 +50,9 @@ func getTables(dbName, tableNames string) []Table {
 	db := dao.GetMysqlDb()
 	var tables []Table
 	if tableNames == "" {
-		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE table_schema='" + dbName + "';").Find(&tables)
+		db.Raw(fmt.Sprintf("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE table_schema='%s';", dbName)).Find(&tables)
 	} else {
-		db.Raw("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE TABLE_NAME IN (" + tableNames + ") AND table_schema='" + dbName + "';").Find(&tables)
+		db.Raw(fmt.Sprintf("SELECT TABLE_NAME as Name,TABLE_COMMENT as Comment FROM information_schema.TABLES WHERE TABLE_NAME IN (%s) AND table_schema='%s';", tableNames, dbName)).Find(&tables)
 	}
 	return tables
 }
@@ -70,10 +70,9 @@ func generateModel(cfg *config.Config, table Table, fields []Field) {
 	// 获取包名
 	// 指定分隔符
 	countSplit := strings.Split(cfg.ModelPath, "/")
-	lenth := len(countSplit)
-	packageName := countSplit[lenth-2]
+	length := len(countSplit)
+	packageName := countSplit[length-2]
 
-	// packageContent := "package models\n\n"
 	packageContent := "package " + packageName + "\n\n"
 
 	importContent := "import \"time\"\n\n"
@@ -82,7 +81,7 @@ func generateModel(cfg *config.Config, table Table, fields []Field) {
 	tableName := helper.CamelCase(table.Name) + "Model"
 
 	tableContent := ""
-	tableContent += "func (dao " + tableName + ") TableName() string {" + "\n"
+	tableContent += "func " + helper.CamelCase(table.Name) + "TableName() string {" + "\n"
 	tableContent += "	return \"" + table.Name + "\"" + "\n"
 	tableContent += "}" + "\n" + "\n"
 
